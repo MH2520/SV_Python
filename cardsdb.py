@@ -164,7 +164,7 @@ def check_alt_art(cursor):
 
 if __name__ == '__main__':
     (conn, cursor) = init()
-    print(translate(cursor, 'Set'))
+    print(translate(cursor, 'chee', exact=0))
     # online_update_all(conn, cursor, lang=1)
     # for row in c.execute('select * from cards where lang=3 and cv like ?', ('%壽%',)):
     #     output = ''

@@ -60,11 +60,10 @@ if __name__ == '__main__':
     sheet.column_dimensions[get_column_letter(base_col+1)].width = 8
     sheet.column_dimensions[get_column_letter(base_col+2)].width = 11
     sheet.column_dimensions[get_column_letter(base_col+3)].width = 11
-    wb.save(filename + '翻译版.xlsx')
     
     for r in range(base_row, sheet.max_row + 1):
         cell = sheet.cell(r, base_col).value
         if cell != None:
             sheet.cell(r, base_col).value = Converter('zh-hans').convert(cell)
-    wb.save(filename + '简体版.xlsx')
+    wb.save(filename + '翻译版.xlsx')
     conn.close()

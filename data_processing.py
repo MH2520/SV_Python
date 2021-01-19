@@ -22,9 +22,9 @@ def deck_merge(deckname):
 
 if __name__ == '__main__':
     # 0 for unlimited, 1 for rotation
-    is_rot = 1
+    is_rot = 0
     rotation = ['无限', '指定']
-    raw_filename = '1月{}第二周'.format(rotation[is_rot])
+    raw_filename = '1月第三周{}'.format(rotation[is_rot])
     processed_filename = raw_filename + '处理版.xlsx'
     raw_filename = raw_filename + '.xlsx'
     report = openpyxl.load_workbook(raw_filename)
