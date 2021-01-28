@@ -34,12 +34,12 @@ if __name__ == '__main__':
     mat_thres = 5
     
     # 0 for unlimited, 1 for rotation
-    is_rot = 1
+    is_rot = 0
     deck_filename = '{}_deck'.format(web_rot[is_rot])
-    web_filename = '{}_match'.format(web_rot[is_rot])
-    app_filename = '1月第三周{}'.format(app_rot[is_rot])
+    web_filename = '1-18~1-26{}'.format(web_rot[is_rot])
+    app_filename = '1月第四周{}'.format(app_rot[is_rot])
     decksheet = openpyxl.load_workbook(deck_filename+'.xlsx')[deck_filename]
-    web_data = openpyxl.load_workbook(web_filename+'.xlsx')[web_filename]
+    web_data = openpyxl.load_workbook(web_filename+'.xlsx')['{}_match'.format(web_rot[is_rot])]
     app_data = openpyxl.load_workbook(app_filename+'.xlsx')['{worksheet}']
     
     processed_filename = app_filename + '综合处理版.xlsx'
@@ -121,11 +121,26 @@ if __name__ == '__main__':
             first = int(first)
             first_wins = int(first_wins)
             
+            # verifying data
+            if matches < wins or matches < first or first < first_wins or wins < first_wins:
+                print('App data error at column {}'.format(get_column_letter(i)))
+            
             data[deck1][deck2][0] += matches
             data[deck1][deck2][1] += wins
             data[deck1][deck2][2] += first
             data[deck1][deck2][3] += first_wins
     
+    # verifying data
+    if (data[:,:,0] != data[:,:,0].transpose()).any()\
+    or (data[:,:,0] != data[:,:,1] + data[:,:,1].transpose()).any()\
+    or (data[:,:,0] != data[:,:,2] + data[:,:,2].transpose()).any()\
+    or (data[:,:,0] < data[:,:,1]).any()\
+    or (data[:,:,0] < data[:,:,2]).any()\
+    or (data[:,:,1] < data[:,:,3]).any()\
+    or (data[:,:,2] < data[:,:,3]).any():
+        print('Data error')
+    
+    # writing labels for winrate matrix
     mat_row = 2
     mat_deckindex = {}
     for (deck, i) in decklist.items():
@@ -135,6 +150,7 @@ if __name__ == '__main__':
             mat_deckindex[i] = mat_row
             mat_row += 1
     
+    # writing data
     col = 0
     base_row = -7
     for (deck1, i) in decklist.items():
