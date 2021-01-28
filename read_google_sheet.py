@@ -4,7 +4,7 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-import links_from_sheet
+import deck_image
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -51,7 +51,7 @@ def main():
                     names.append(row[0])
                     nums.append(i+1)
                     links.append(row[i+1])
-        links_from_sheet.batch_download_deck(names, nums, links)
+        deck_image.batch_download_deck(names, nums, links)
 
 if __name__ == '__main__':
     main()
