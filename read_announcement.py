@@ -1,5 +1,6 @@
 import requests
 import re
+import argparse
 from bs4 import BeautifulSoup
 from langconv import Converter
 
@@ -50,6 +51,10 @@ def ann_format(ann_title, ann_text, ann_link):
     return ann_text
 
 if __name__ == '__main__':
-    (ann_num, ann_link, img_links, ann_title, ann_text) = read_announcement(0)
-    ann_text = ann_format(ann_title, ann_text, ann_link)
-    print(ann_text)
+    parser = argparse.ArgumentParser(description='Downloads and formats announcements from Shadowverse')
+    parser.add_argument('-n','--num',nargs='+',default=0,help='Selects the announcement to download')
+    args = parser.parse_args()
+    for i in args.num:
+        (ann_num, ann_link, img_links, ann_title, ann_text) = read_announcement(int(i))
+        ann_text = ann_format(ann_title, ann_text, ann_link)
+        print(ann_text)
