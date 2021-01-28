@@ -164,12 +164,17 @@ def check_alt_art(cursor):
 
 if __name__ == '__main__':
     (conn, cursor) = init()
-    print(translate(cursor, 'chee', exact=0))
-    # online_update_all(conn, cursor, lang=1)
-    # for row in c.execute('select * from cards where lang=3 and cv like ?', ('%壽%',)):
+    # for row in cursor.execute('select * from cards where cid=? and lang=?', [900344080,3]):
+    #     keys = row.keys()
     #     output = ''
-    #     for key in row.keys():
-    #         output += str(row[key]) + ', '
+    #     for key in keys:
+    #         if key in row.keys():
+    #             output += key + ': ' + str(row[key]) + '\n'
     #     print(output[:-2])
+    for row in cursor.execute('select * from cards where lang=3 and cv like ?', ('%廣橋%',)):
+        output = ''
+        for key in ('title',):
+            output += str(row[key]) + ', '
+        print(output[:-2])
     
     conn.close()
