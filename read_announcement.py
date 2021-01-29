@@ -30,7 +30,7 @@ def download_ann_img(ann_num, img_links):
     for img_link in img_links:
         i += 1
         r = requests.get(img_link, stream=True)
-        print(r.status_code) # 返回状态码
+        print(r.status_code)
         if r.status_code == 200:
             open('{}.{}.png'.format(ann_num, i), 'wb').write(r.content)
 
@@ -50,11 +50,15 @@ def ann_format(ann_title, ann_text, ann_link):
     ann_text = ann_title + ann_text + '\n\n' + ann_link
     return ann_text
 
+def main(i):
+    (ann_num, ann_link, img_links, ann_title, ann_text) = read_announcement(int(i))
+    ann_text = ann_format(ann_title, ann_text, ann_link)
+    print(ann_text)
+    download_ann_img(ann_num, img_links)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Downloads and formats announcements from Shadowverse')
-    parser.add_argument('-n','--num',nargs='+',default=0,help='Selects the announcement to download')
+    parser.add_argument('-n', '--num', nargs='+', default=[0], help='Selects the announcements to download')
     args = parser.parse_args()
     for i in args.num:
-        (ann_num, ann_link, img_links, ann_title, ann_text) = read_announcement(int(i))
-        ann_text = ann_format(ann_title, ann_text, ann_link)
-        print(ann_text)
+        main(i)
