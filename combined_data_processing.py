@@ -29,15 +29,12 @@ def merge(deck, is_rot):
         else:
             return deck
 
-if __name__ == '__main__':
-    # minimum number of matches for a deck to be included in winrate matrix
-    mat_thres = 5
-    
-    # 0 for unlimited, 1 for rotation
-    is_rot = 0
-    deck_filename = '{}_deck'.format(web_rot[is_rot])
-    web_filename = '1-18~1-26{}'.format(web_rot[is_rot])
-    app_filename = '1月第四周{}'.format(app_rot[is_rot])
+# mat_thres: minimum number of matches for a deck to be included in winrate matrix
+# is_rot: 0 for unlimited, 1 for rotation
+def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
+    deck_filename = deckname.format(web_rot[is_rot])
+    web_filename = webname.format(web_rot[is_rot])
+    app_filename = appname.format(app_rot[is_rot])
     decksheet = openpyxl.load_workbook(deck_filename+'.xlsx')[deck_filename]
     web_data = openpyxl.load_workbook(web_filename+'.xlsx')['{}_match'.format(web_rot[is_rot])]
     app_data = openpyxl.load_workbook(app_filename+'.xlsx')['{worksheet}']
@@ -56,7 +53,7 @@ if __name__ == '__main__':
         deckid[int(decksheet.cell(i, 1).value)] = decksheet.cell(i, 3).value
         
     print(decklist)
-    print(deckid)
+    # print(deckid)
     
     # total, wins, 1st total, 1st wins in each matchup
     data = np.zeros((len(decklist), len(decklist), 4))
@@ -140,10 +137,14 @@ if __name__ == '__main__':
     or (data[:,:,2] < data[:,:,3]).any():
         print('Data error')
     
+    # sorting decklist by number of matches, from high to low
+    ord_decklist = list(decklist.items())
+    ord_decklist.sort(key=(lambda x: np.sum(data, 1)[x[1]][0]), reverse=True)
+    
     # writing labels for winrate matrix
     mat_row = 2
     mat_deckindex = {}
-    for (deck, i) in decklist.items():
+    for (deck, i) in ord_decklist:
         if np.sum(data, 1)[i][0] >= mat_thres:
             sheet3.cell(mat_row, 1).value = deck
             sheet3.cell(1, mat_row).value = deck
@@ -153,7 +154,7 @@ if __name__ == '__main__':
     # writing data
     col = 0
     base_row = -7
-    for (deck1, i) in decklist.items():
+    for (deck1, i) in ord_decklist:
         if np.sum(data, 1)[i][0] == 0:
             continue
         col = 3
@@ -180,7 +181,7 @@ if __name__ == '__main__':
         sheet2.cell(base_row+3, 2).value = '=SUM(C{}:{}{})'.format(base_row+3, get_column_letter(3+len(decklist)), base_row+3)
         sheet2.cell(base_row+4, 2).value = '=SUM(C{}:{}{})'.format(base_row+4, get_column_letter(3+len(decklist)), base_row+4)
         
-        for (deck2, j) in decklist.items():
+        for (deck2, j) in ord_decklist:
             if data[i][j][0] > 0:
                 first += data[i][j][2]
                 first_wins += data[i][j][3]
@@ -221,3 +222,6 @@ if __name__ == '__main__':
     
     sheet3.conditional_formatting.add('A1:{}{}'.format(get_column_letter(1+len(decklist)), 1+len(decklist)), rule)
     processed.save(processed_filename)
+    
+if __name__ == '__main__':
+    main(webname='1-18~1-26{}', appname='1月第四周{}', is_rot=0)
