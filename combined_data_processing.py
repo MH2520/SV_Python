@@ -128,14 +128,20 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
             data[deck1][deck2][3] += first_wins
     
     # verifying data
-    if (data[:,:,0] != data[:,:,0].transpose()).any()\
-    or (data[:,:,0] != data[:,:,1] + data[:,:,1].transpose()).any()\
-    or (data[:,:,0] != data[:,:,2] + data[:,:,2].transpose()).any()\
-    or (data[:,:,0] < data[:,:,1]).any()\
-    or (data[:,:,0] < data[:,:,2]).any()\
-    or (data[:,:,1] < data[:,:,3]).any()\
-    or (data[:,:,2] < data[:,:,3]).any():
-        print('Data error')
+    if (data[:,:,0] != data[:,:,0].transpose()).any():
+        print('Data error 1')
+    if (data[:,:,0] != data[:,:,1] + data[:,:,1].transpose()).any():
+        print('Data error 2')
+    if (data[:,:,0] != data[:,:,2] + data[:,:,2].transpose()).any():
+        print('Data error 3')
+    if (data[:,:,0] < data[:,:,1]).any():
+        print('Data error 4')
+    if (data[:,:,0] < data[:,:,2]).any():
+        print('Data error 5')
+    if (data[:,:,1] < data[:,:,3]).any():
+        print('Data error 6')
+    if (data[:,:,2] < data[:,:,3]).any():
+        print('Data error 7')
     
     # sorting decklist by number of matches, from high to low
     ord_decklist = list(decklist.items())
@@ -224,4 +230,4 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
     processed.save(processed_filename)
     
 if __name__ == '__main__':
-    main(webname='1-18~1-26{}', appname='1月第四周{}', is_rot=0)
+    main(webname='{}_match', appname='2月第一周{}', is_rot=0)
