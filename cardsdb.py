@@ -162,6 +162,19 @@ def check_alt_art(cursor):
         std_name = cursor.execute('select * from cards where cid=? and lang=3', [std]).fetchone()
         print('{}: {}; {}: {}'.format(alt, alt_name['title'], std, std_name['title']))
 
+def search(cursor, lang=3, keys=['title'], simp=0):
+    for row in cursor.execute('select * from cards where cid=? and lang=?', [102743010, lang]):
+        if len(keys) == 0:
+            keys = row.keys()
+        output = ''
+        for key in keys:
+            if key in row.keys():
+                if simp == 0:
+                    output += str(row[key]) + ', '
+                else:
+                    output += key + ': ' + str(row[key]) + '\n'
+        print(output[:-2])
+
 if __name__ == '__main__':
     (conn, cursor) = init()
     # for row in cursor.execute('select * from cards where cid=? and lang=?', [900344080,3]):
@@ -171,10 +184,10 @@ if __name__ == '__main__':
     #         if key in row.keys():
     #             output += key + ': ' + str(row[key]) + '\n'
     #     print(output[:-2])
-    for row in cursor.execute('select * from cards where lang=3 and cv like ?', ('%廣橋%',)):
-        output = ''
-        for key in ('title',):
-            output += str(row[key]) + ', '
-        print(output[:-2])
-    
+    # for row in cursor.execute('select * from cards where lang=3 and cv like ?', ('%廣橋%',)):
+    #     output = ''
+    #     for key in ('title',):
+    #         output += str(row[key]) + ', '
+    #     print(output[:-2])
+    search(cursor)
     conn.close()
