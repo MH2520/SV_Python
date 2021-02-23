@@ -230,4 +230,4 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
     processed.save(processed_filename)
     
 if __name__ == '__main__':
-    main(webname='{}_match', appname='2月第一周{}', is_rot=0)
+    main(webname='{}_match(1)', appname='十天觉醒削卡后到dlc前{}(1)', is_rot=0)
