@@ -129,7 +129,7 @@ def list_high_cost():
 
 def online_update_all(conn, cursor, lang=3, card_set = []):
     for cost in range(11):
-        off = util.get_last_offset(format_=3, include_token=1, cost=(cost,))
+        off = util.get_last_offset(format_=3, include_token=1, cost=(cost,), card_set=card_set)
         for i in range(off+1):
             content = requests.get(util.link_format(format_=3, include_token=1, card_set=card_set, offset=12*i, cost=(cost,))).text
             results = re.findall(cid_pattern, content)
@@ -162,8 +162,8 @@ def check_alt_art(cursor):
         std_name = cursor.execute('select * from cards where cid=? and lang=3', [std]).fetchone()
         print('{}: {}; {}: {}'.format(alt, alt_name['title'], std, std_name['title']))
 
-def search(cursor, lang=3, keys=['title'], simp=0):
-    for row in cursor.execute('select * from cards where cid=? and lang=?', [102743010, lang]):
+def search(cursor, lang=3, search_keys = [], search_items = [], keys=['title'], simp=0):
+    for row in cursor.execute('select * from cards where atk0>0 and atk0<2 and lang=?', [lang]):
         if len(keys) == 0:
             keys = row.keys()
         output = ''
@@ -184,10 +184,11 @@ if __name__ == '__main__':
     #         if key in row.keys():
     #             output += key + ': ' + str(row[key]) + '\n'
     #     print(output[:-2])
-    # for row in cursor.execute('select * from cards where lang=3 and cv like ?', ('%廣橋%',)):
-    #     output = ''
-    #     for key in ('title',):
-    #         output += str(row[key]) + ', '
-    #     print(output[:-2])
-    search(cursor)
+    # for row in cursor.execute('select * from cards where lang=3 and title like ?', ('%迅槍連擊%',)):
+        # output = ''
+        # for key in ('title', 'cost', 'skill0'):
+            # output += str(row[key]) + ', '
+        # print(output[:-2])
+    online_update_all(conn, cursor, lang=1)
+    # search(cursor)
     conn.close()
