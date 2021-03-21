@@ -94,12 +94,14 @@ def update(cursor, data, cost):
             (data['num'], data['type'], data['rarity'], data['class'], data['pack'], 
              data['title'], cost, data['skill0'], data['desc0'], atk0, atk1, life0, life1, 
              skill1, desc1, data['info'][0], cv, rels, data['cid'], data['lang']))
+        return 0
     else: # No such row exists, so insert a new row with the data
         cursor.execute("insert into cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
                        (data['cid'], data['lang'], data['num'], data['type'], 
                         data['rarity'], data['class'], data['pack'], data['title'], 
                         cost, data['skill0'], data['desc0'], atk0, atk1, 
                         life0, life1, skill1, desc1, data['info'][0], cv, rels))
+        return 1
 
 def translate(cursor, title, lang1=1, lang2=3, exact=0):
     if exact == 0:
@@ -128,6 +130,7 @@ def list_high_cost():
             print(cid)
 
 def online_update_all(conn, cursor, lang=3, card_set = []):
+    num = 0
     for cost in range(11):
         off = util.get_last_offset(format_=3, include_token=1, cost=(cost,), card_set=card_set)
         for i in range(off+1):
@@ -137,10 +140,11 @@ def online_update_all(conn, cursor, lang=3, card_set = []):
             for cid in results:
                 print(cid)
                 if cost<10 or int(cid) not in high_cost_list:
-                    update(cursor, util.get_card_data(int(cid),lang=lang), cost)
+                    num += update(cursor, util.get_card_data(int(cid),lang=lang), cost)
                 else:
-                    update(cursor, util.get_card_data(int(cid),lang=lang), high_cost_list[int(cid)])
+                    num += update(cursor, util.get_card_data(int(cid),lang=lang), high_cost_list[int(cid)])
             conn.commit()
+    print("Added {} cards".format(num))
 
 def list_alt_art(cursor):
     file = open('altart_dict.py', 'w')
@@ -157,6 +161,7 @@ def list_alt_art(cursor):
     file.close()
 
 def check_alt_art(cursor):
+    from altart_dict import alt2std
     for (alt, std) in alt2std.items():
         alt_name = cursor.execute('select * from cards where cid=? and lang=3', [alt]).fetchone()
         std_name = cursor.execute('select * from cards where cid=? and lang=3', [std]).fetchone()
@@ -189,6 +194,7 @@ if __name__ == '__main__':
         # for key in ('title', 'cost', 'skill0'):
             # output += str(row[key]) + ', '
         # print(output[:-2])
-    online_update_all(conn, cursor, lang=1)
+    # online_update_all(conn, cursor, lang=1)
+    check_alt_art(cursor)
     # search(cursor)
     conn.close()
