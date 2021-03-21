@@ -4,7 +4,10 @@ from selenium import webdriver
 import time
 
 def download_deck(name, num, link, lang1='en', lang2='zh-tw'):
-    browser = webdriver.Chrome()
+    option = webdriver.ChromeOptions()
+    option.add_argument('headless')
+    option.add_experimental_option("excludeSwitches", ['enable-automation','enable-logging'])
+    browser = webdriver.Chrome(chrome_options=option)
     browser.maximize_window()
     link = link[:len(link)-len(lang1)]+lang2
     name = name.replace('/','')
@@ -34,11 +37,15 @@ def batch_download_deck(names, nums, links, lang1='en', lang2='zh-tw'):
         print('Lengths of lists don\'t match')
         return
     l = len(names)
-    browser = webdriver.Chrome()
+    option = webdriver.ChromeOptions()
+    option.add_argument('headless')
+    option.add_experimental_option("excludeSwitches", ['enable-automation','enable-logging'])
+    browser = webdriver.Chrome(chrome_options=option)
     browser.maximize_window()
     for i in range(l):
         links[i] = links[i][:len(links[i])-len(lang1)]+lang2
         names[i] = names[i].replace('/','')
+        names[i] = names[i].replace('|','')
         filename = '{}_{}.png'.format(names[i], nums[i])
         browser.get(links[i])
         button = browser.find_elements_by_id('tweet')[0]

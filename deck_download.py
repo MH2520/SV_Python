@@ -8,7 +8,7 @@ if __name__ == '__main__':
     links = []
     for i in range(8):
         for j in range(3):
-            names.append('2_'+sheet.cell(i+1, 1).value)
+            names.append('4_'+sheet.cell(i+1, 1).value)
             nums.append(j+1)
-            links.append(sheet.cell(i+1, j+2).value)
+            links.append(sheet.cell(i+1, j+4).value)
     deck_image.batch_download_deck(names, nums, links)
