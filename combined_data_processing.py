@@ -231,6 +231,6 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
     
 if __name__ == '__main__':
     webname = '{}_match'
-    appname = '3月第二周{}'
+    appname = '4月第一周{}'
     main(webname=webname, appname=appname, is_rot=0)
     main(webname=webname, appname=appname, is_rot=1)
