@@ -134,15 +134,26 @@ def online_update_all(conn, cursor, lang=3, card_set = []):
     for cost in range(11):
         off = util.get_last_offset(format_=3, include_token=1, cost=(cost,), card_set=card_set)
         for i in range(off+1):
-            content = requests.get(util.link_format(format_=3, include_token=1, card_set=card_set, offset=12*i, cost=(cost,))).text
+            for s in range(10):
+                try:
+                    content = requests.get(util.link_format(format_=3, include_token=1, card_set=card_set, offset=12*i, cost=(cost,))).text
+                    break
+                except:
+                    print('Cost {}, Page {}, exception on trial {}'.format(cost, i, s))
             results = re.findall(cid_pattern, content)
-            print('Cost {}, Page {}'.format(cost, i))
+            print('Cost {}, Page {}, lang {}'.format(cost, i, lang))
             for cid in results:
-                print(cid)
+                for t in range(10):
+                    try:
+                        data = util.get_card_data(int(cid),lang=lang)
+                        break
+                    except:
+                        print('{} exception on trial {}'.format(cid, t))
+                print('{} downloaded'.format(cid))
                 if cost<10 or int(cid) not in high_cost_list:
-                    num += update(cursor, util.get_card_data(int(cid),lang=lang), cost)
+                    num += update(cursor, data, cost)
                 else:
-                    num += update(cursor, util.get_card_data(int(cid),lang=lang), high_cost_list[int(cid)])
+                    num += update(cursor, data, high_cost_list[int(cid)])
             conn.commit()
     print("Added {} cards".format(num))
 
@@ -189,12 +200,16 @@ if __name__ == '__main__':
     #         if key in row.keys():
     #             output += key + ': ' + str(row[key]) + '\n'
     #     print(output[:-2])
-    # for row in cursor.execute('select * from cards where lang=3 and title like ?', ('%迅槍連擊%',)):
+    # for row in cursor.execute('select * from cards where lang=3 and cv like ?', ('%檜山修之%',)):
         # output = ''
-        # for key in ('title', 'cost', 'skill0'):
+        # for key in ('title',):
             # output += str(row[key]) + ', '
         # print(output[:-2])
-    # online_update_all(conn, cursor, lang=1)
+    # for i in range(8):
+        # for row in cursor.execute('select count(*) from cards where lang = ?', (i,)):
+            # print('lang {}, cards num {}'.format(i, row['count(*)']))
+        # online_update_all(conn, cursor, lang=i)
+    list_alt_art(cursor)
     check_alt_art(cursor)
     # search(cursor)
     conn.close()
