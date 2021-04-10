@@ -159,7 +159,28 @@ def download_img_and_compress(cid, size=(199,259)):
     img.thumbnail(size,Image.ANTIALIAS)
     img.save('small_{}.png'.format(cid),'png')
 
+def get_hash(link):
+    if link.find('deckbuilder') >= 0:
+        return re.search('hash=(.*?)&lang=', link).group(1)
+    elif link.find('deck/') >= 0:
+        return re.search('deck/(.*?)\?lang=', link).group(1)
+    else:
+        return 'Not a valid deck link'
+    
+def hash_breakdown(hs):
+    s = hs.split('.')
+    b = [int(s[0]), int(s[1])]
+    for i in range(2, len(s)):
+        b.append(cy_decode(s[i]))
+    return b
+
+def link_from_hash(hs, lang=3):
+    return 'https://shadowverse-portal.com/deck/{}?lang={}'.format(hs, lang_list[lang])
+
 if __name__ == '__main__':
-    print(get_last_offset(name='b'))
+    link1 = 'https://shadowverse-portal.com/deckbuilder/create/6?hash=3.6.6v3oc.72BIC.72GAY.72Icy.761tS.764Ji.6-Ntw.6v1MC.6v6Ei.6yrV2.gYEAw.6wgKo.72GAi.75_R2.6v8gy.74b5y.78L5A.72GvQ.6v8go.70myy.74Yfi.78MoY.78Moi.6-S1i.767Ug.gYGdA.6-UTo.6yypo.74TnM.78PEo.70kWY.74b5o.74b5o.74b5o.6-N92.6v8h6.74TnC.766lo.6yyq6.74b66&lang=zh-tw'
+    link2 = 'https://shadowverse-portal.com/deck/3.5.745Mi.745Mi.745Mi.77xxo.77xxo.77xxo.72BIC.72BIC.72BIC.761tS.761tS.761tS.745Ms.745Ms.745Ms.77vW0.77vW0.77vW0.7Bm4y.7Bm4y.6yTpQ.6yTpQ.72DkI.72DkI.72DkI.745MY.745MY.745MY.77vVi.77vVi.77vVi.747oy.747oy.747oy.748Xg.748Xg.748Xg.747oo.747oo.747oo?lang=en'
+    print(link_from_hash(get_hash(link1)))
+    print(hash_breakdown(get_hash(link2)))
     # for i in range(8):
     #     print(get_card_data(118141010,i))
