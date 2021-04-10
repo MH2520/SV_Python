@@ -58,7 +58,7 @@ def main(i):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Downloads and formats announcements from Shadowverse')
-    parser.add_argument('-n', '--num', nargs='+', default=[0], help='Selects the announcements to download')
+    parser.add_argument('-n', nargs='+', default=[0], help='Selects the announcements to download')
     args = parser.parse_args()
-    for i in args.num:
+    for i in args.n:
         main(i)
