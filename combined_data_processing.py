@@ -4,6 +4,8 @@ from openpyxl.utils.cell import get_column_letter
 import numpy as np
 from deckname_dict import deckname_dict
 from deckmerge_dict import rot_decktrans, ult_decktrans, rot_deckmerge, ult_deckmerge
+from datetime import date
+import argparse
 rule = ColorScaleRule(start_type='num', start_value=0, start_color='FFF8696B',
                       mid_type='num', mid_value=0.5, mid_color='FFFFFFFF',
                       end_type='num', end_value=1, end_color='FF63BE7B')
@@ -45,6 +47,7 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
     sheet1.title = '中文版'
     sheet2 = processed.create_sheet('英文版')
     sheet3 = processed.create_sheet('胜率方阵')
+    sheet4 = processed.create_sheet('精简胜率表')
     decklist = {}
     deckid = {}
     
@@ -160,6 +163,11 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
     # writing data
     col = 0
     base_row = -7
+    sheet4.cell(1, 1).value = '卡组名称'
+    sheet4.cell(1, 2).value = '对局数'
+    sheet4.cell(1, 3).value = '胜率'
+    sheet4.cell(1, 4).value = '先手胜率'
+    sheet4.cell(1, 5).value = '后手胜率'
     for (deck1, i) in ord_decklist:
         if np.sum(data, 1)[i][0] == 0:
             continue
@@ -225,12 +233,28 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
         sheet1.cell(base_row+6, 2).number_format = '0.00%'
         sheet2.cell(base_row+5, 2).number_format = '0.00%'
         sheet2.cell(base_row+6, 2).number_format = '0.00%'
+        
+        sheet4.cell(base_row//7+2, 1).value = deck1
+        sheet4.cell(base_row//7+2, 2).value = np.sum(data, 1)[i][0]
+        sheet4.cell(base_row//7+2, 3).value = np.sum(data, 1)[i][1] / np.sum(data, 1)[i][0]
+        sheet4.cell(base_row//7+2, 4).value = np.sum(data, 1)[i][3] / max(np.sum(data, 1)[i][2], 1)
+        sheet4.cell(base_row//7+2, 5).value = (np.sum(data, 1)[i][1] - np.sum(data, 1)[i][3]) / max(np.sum(data, 1)[i][0] - np.sum(data, 1)[i][2], 1)
+        sheet4.cell(base_row//7+2, 3).number_format = '0.00%'
+        sheet4.cell(base_row//7+2, 4).number_format = '0.00%'
+        sheet4.cell(base_row//7+2, 5).number_format = '0.00%'
     
     sheet3.conditional_formatting.add('A1:{}{}'.format(get_column_letter(1+len(decklist)), 1+len(decklist)), rule)
     processed.save(processed_filename)
     
 if __name__ == '__main__':
-    webname = '{}_match'
-    appname = '4月第一周{}'
+    today = date.today()
+    month = today.month
+    week = '一二三四五六七八九十'[(today.day - 1) // 7]
+    parser = argparse.ArgumentParser(description='Combined data processing')
+    parser.add_argument('--web', '-w', default='{}_match', help='webdata file name')
+    parser.add_argument('--app', '-a', default='{}月第{}周'.format(month, week)+'{}', help='appdata file name')
+    args = parser.parse_args()
+    webname = args.web
+    appname = args.app
     main(webname=webname, appname=appname, is_rot=0)
     main(webname=webname, appname=appname, is_rot=1)
