@@ -50,9 +50,11 @@ def main(webname, appname, deckname='{}_deck', mat_thres=5, is_rot=0):
     sheet4 = processed.create_sheet('精简胜率表')
     decklist = {}
     deckid = {}
+    deckclass = {}
     
     for i in range(2, decksheet.max_row+1):
         decklist[decksheet.cell(i, 3).value] = i-2
+        deckclass[decksheet.cell(i, 3).value] = decksheet.cell(i, 2).value
         deckid[int(decksheet.cell(i, 1).value)] = decksheet.cell(i, 3).value
         
     print(decklist)
