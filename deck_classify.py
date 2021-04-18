@@ -1,4 +1,5 @@
 import util
+import openpyxl
 from deck_classify_dict import rot_deck, unl_deck
 from altart_dict import alt2std
 
@@ -28,36 +29,37 @@ def count_cards(hs):
 
 def classify(mode, cl, cnt):
     if mode == 0: # rotation
-        for (deck, criterion) in rot_deck:
-            if cl != criterion[0]:
-                continue
-            for i in range((len(criterion)-1)/3):
-                cid = criterion[3*i+1]
-                op = criterion[3*i+2]
-                num = criterion[3*i+3]
-                if op == 0: # >=
-                    if cid not in cnt or cnt[cid] < num:
-                        continue
-                elif op == 1: # <=
-                    if cid in cnt and cnt[cid] > num:
-                        continue
-            return deck
-    else # unlimited
-        for (deck, criterion) in unl_deck:
-            if cl != criterion[0]:
-                continue
-            for i in range((len(criterion)-1)/3):
-                cid = criterion[3*i+1]
-                op = criterion[3*i+2]
-                num = criterion[3*i+3]
-                if op == 0: # >=
-                    if cid not in cnt or cnt[cid] < num:
-                        continue
-                elif op == 1: # <=
-                    if cid in cnt and cnt[cid] > num:
-                        continue
+        deckcodes = rot_deck
+    else: # unlimited
+        deckcodes = unl_deck
+    
+    for (deck, crit) in deckcodes.items():
+        is_deck = True
+        if cl != crit[0]:
+            continue
+        for i in range((len(crit)-1)//3):
+            cid = crit[3*i+1]
+            op = crit[3*i+2]
+            num = crit[3*i+3]
+            if op == 0: # >=
+                if cid not in cnt or cnt[cid] < num:
+                    is_deck = False
+                    break
+            elif op == 1: # <=
+                if cid in cnt and cnt[cid] > num:
+                    is_deck = False
+                    break
+        if is_deck:
             return deck
     return '其它' + classes[cl-1]
 
 if __name__ == '__main__':
-    print('0')
+    sheet = openpyxl.load_workbook('decklist.xlsx')['Sheet1']
+    for i in range(8):
+        output = '{}: '.format(sheet.cell(i+1, 1).value)
+        for j in range(3):
+            (cl, cnt) = count_cards(util.get_hash(sheet.cell(i+1, j+2).value))
+            output += classify(0, cl, cnt)
+            if j != 3:
+                output += ', '
+        print(output)
