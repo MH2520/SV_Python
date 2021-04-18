@@ -4,7 +4,7 @@ import requests
 import re
 import argparse
 from altart_dict import alt2std, std2alt
-from search_dict import svportal_dict, cardsdb_dict
+from search_dict import svportal_packs, alt_packs
 
 cid_pattern = re.compile('<a href="/card/(.*?)" class="el-card-visual-content">', re.S)
 title_pattern = re.compile('<p class="el-card-visual-name">(.*?)</p>', re.S)
@@ -57,6 +57,12 @@ type_text = [['フォロワー', 'アミュレット', 'アミュレット', '�
 rel_text = ['関連カード', 'Related Cards', '관련 카드', '相關卡片', 
             'Cartes liées', 'Carte Relazionate', 'Verwandte Karten', 
             'Cartas Relacionadas']
+
+promo_text = ['プライズ', 'Promo', '한정', '永久卡', 'Spécial', 
+              'Premio', 'Preis', 'Premio']
+
+token_text = ['トークン', 'Token', '토큰', '特殊卡', 'Carte jeton', 
+              'Carta Token', 'Token', 'Cartas Token']
 
 # List of cards with cost > 10
 high_cost_list = {
@@ -299,11 +305,14 @@ def print_card(cursor, row, form):
     elif form == 3:
         output = '{} {} '.format(row['cid'], row['title'])
         if row['pack'] < 700:
-            output += '{} '.format(svportal_dict[str(row['pack']+10000-100)])
+            output += '{} '.format(svportal_packs[lang][str(row['pack']+10000-100)])
         elif row['pack'] < 900:
-            output += '{} '.format(cardsdb_dict[row['pack']]) # TODO: add other languages for packs and update search_dict accordingly
+            if type(alt_packs[row['pack']][0]) == int:
+                output += promo_text[lang] + ' '
+            else:
+                output += '{} '.format(svportal_packs[lang][str(alt2std[row['cid']]//1000000+10000-100)])
         else:
-            output += 'Token'
+            output += token_text[lang] + ' '
         output += '{} {} {} {} Cost {}\n'.format(class_text[lang][row['class']], rar_text[lang][row['rarity']-1], type_text[lang][row['type']-1], row['trait'], row['cost'])
         if row['type'] == 1:
             output += '{} {}/{}\n'.format(evo_text[lang][0], row['atk0'], row['life0'])
@@ -390,8 +399,6 @@ def search(cursor, lang=3, int_keys=[], txt_keys=[], atk=(0, -1), life=(0, -1), 
     search_keys = search_keys + pack_keys
     
     altoken = []
-    if not alt:
-        command = command + ' and (pack < 700 or pack >= 900)'
     if not token:
         command = command + ' and pack < 900'
     
@@ -438,5 +445,5 @@ if __name__ == '__main__':
     # list_alt_art(cursor)
     # check_alt_art(cursor)
     # online_list_high_cost()
-    search(cursor, int_keys=[('cost', [3, 4]), ('pack', [120]), ('class', [1])], lang=5, token=True, form=3)
+    search(cursor, int_keys=[('pack', [704])], alt=False, token=True, form=3)
     conn.close()
