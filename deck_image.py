@@ -1,72 +1,40 @@
 import requests
-from PIL import Image
-from selenium import webdriver
-import time
+import urllib3
 
-def download_deck(name, num, link, lang1='en', lang2='zh-tw'):
-    option = webdriver.ChromeOptions()
-    option.add_argument('headless')
-    option.add_experimental_option("excludeSwitches", ['enable-automation','enable-logging'])
-    browser = webdriver.Chrome(chrome_options=option)
-    browser.maximize_window()
-    link = link[:len(link)-len(lang1)]+lang2
+def download_deck(name, num, link):
     name = name.replace('/','')
+    name = name.replace('|','')
     filename = '{}_{}.png'.format(name, num)
-    browser.get(link)
-    button = browser.find_elements_by_id('tweet')[0]
-    button.click()
-    time.sleep(3)
-    browser.execute_script('window.open("https://shadowverse-portal.com/image/1?lang={}");'.format(lang2))
-    browser.switch_to.window(browser.window_handles[1])
-    img = browser.find_element_by_xpath("/html/body/img[1]")
-    browser.save_screenshot(filename)
-    loc = img.location
-    size = img.size
-    image = Image.open(filename)
-    left = loc['x']
-    top = loc['y']
-    right = loc['x'] + size['width']
-    bottom = loc['y'] + size['height']
-    image = image.crop((left, top, right, bottom))
-    image.save(filename, 'png')
-    browser.close()
-    browser.quit()
+    
+    urllib3.disable_warnings()
+    session = requests.Session()
+    session.headers.clear()
+    result = session.post('https://shadowverse-portal.com/image/1?lang=zh-tw', headers={'Referer': link}, verify=False)
+    if result.status_code == 200:
+        open(filename, 'wb').write(result.content)
+        print(filename + ' downloaded.')
+    else:
+        print(result.text)
 
 def batch_download_deck(names, nums, links, lang1='en', lang2='zh-tw'):
     if len(names) != len(nums) or len(names) != len(links):
-        print('Lengths of lists don\'t match')
+        print('Lengths of lists don\'t match.')
         return
-    l = len(names)
-    option = webdriver.ChromeOptions()
-    option.add_argument('headless')
-    option.add_experimental_option("excludeSwitches", ['enable-automation','enable-logging'])
-    browser = webdriver.Chrome(chrome_options=option)
-    browser.maximize_window()
-    for i in range(l):
-        links[i] = links[i][:len(links[i])-len(lang1)]+lang2
+    
+    urllib3.disable_warnings()
+    session = requests.Session()
+    session.headers.clear()
+    
+    for i in range(len(names)):
         names[i] = names[i].replace('/','')
         names[i] = names[i].replace('|','')
         filename = '{}_{}.png'.format(names[i], nums[i])
-        browser.get(links[i])
-        button = browser.find_elements_by_id('tweet')[0]
-        button.click()
-        time.sleep(3)
-        browser.execute_script('window.open("https://shadowverse-portal.com/image/1?lang={}");'.format(lang2))
-        browser.switch_to.window(browser.window_handles[1])
-        img = browser.find_element_by_xpath("/html/body/img[1]")
-        browser.save_screenshot(filename)
-        loc = img.location
-        size = img.size
-        image = Image.open(filename)
-        left = loc['x']
-        top = loc['y']
-        right = loc['x'] + size['width']
-        bottom = loc['y'] + size['height']
-        image = image.crop((left, top, right, bottom))
-        image.save(filename, 'png')
-        browser.close()
-        browser.switch_to.window(browser.window_handles[0])
-    browser.quit()
+        result = session.post('https://shadowverse-portal.com/image/1?lang=zh-tw', headers={'Referer': links[i]}, verify=False)
+        if result.status_code == 200:
+            open(filename, 'wb').write(result.content)
+            print(filename + ' downloaded.')
+        else:
+            print(result.text)
 
 if __name__ == '__main__':
     names = ['Alice', 'Bob', 'Catherine', 'Dave', 'Eve', 'Federick']
