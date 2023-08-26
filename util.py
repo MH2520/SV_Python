@@ -1,6 +1,6 @@
 import requests
 import re
-from PIL import Image
+import image
 from bs4 import BeautifulSoup
 
 cy_base64 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
@@ -31,7 +31,7 @@ img_link = 'https://shadowverse-portal.com/image/card/phase2/common/C/C_{}.png'
 # 17. offset:    offset of search, starts at 0 (or empty string) and 
 #                increases by 12 for each page (as each page contains at most 12 cards)
 def link_format(name='', format_=1, clan=[], cost=[], card_set=[], char_type=[], rarity=[], 
-                atk=0, atk_op=1, life=0, life_op=1, type_='', skill='', 
+                atk=0, atk_op=1, life=0, life_op=1, type_=0, skill='', 
                 include_token='', card_text='', lang=3, offset=''):
     extra_str = ''
     for i in clan:
@@ -50,17 +50,21 @@ def link_format(name='', format_=1, clan=[], cost=[], card_set=[], char_type=[],
 # Finds the offset number divided by 12 of the last page of a particular search
 # See the documenation for link_format for explanations of parameters
 def get_last_offset(name='', format_=1, clan=[], cost=[], card_set=[], char_type=[], rarity=[], 
-                    atk=0, atk_op=1, life=0, life_op=1, type_='', skill='', 
+                    atk=0, atk_op=1, life=0, life_op=1, type_=0, skill='', 
                     include_token='', card_text='', lang=3):
     init_link = link_format(name, format_, clan, cost, card_set, char_type, rarity, atk, atk_op, 
                             life, life_op, type_, skill, include_token, card_text, lang)
     content = requests.get(init_link).text
     soup = BeautifulSoup(content, 'html.parser')
     last = soup.find(class_='bl-pagination-item is-last')
-    if last == None:
-        return 0
+    if last == None: # <= 3 pages
+        items = soup.find_all(class_='bl-pagination-item')
+        if len(items)==0:
+            return 0
+        else:
+            return len(items)//2-2
     else:
-        return int(re.search('card_offset=(\d*)', last.contents[0].get('href')).group(1))//12
+        return int(re.search(r'card_offset=(\d*)', last.contents[0].get('href')).group(1))//12
     
 # converts card ID to 5-character code
 def cy_encode(cid):
@@ -98,32 +102,45 @@ def get_card_data(cid, lang=3):
     cd //= 10
     card['pack'] = cd
     card['title'] = soup.find(class_='card-main-title').get_text()
+    
     if len(card['title']) > 0:
-        card['title'] = card['title'][2:-2]
+        card['title'] = card['title'].strip('\r\n')
+        if lang == 0:
+            card['title'] = re.sub(r'\(.*?\)', '', card['title'])
     
     skills = soup.find_all(class_='card-content-skill')
     card['skill0'] = skills[0].get_text('\n')
     if len(card['skill0']) > 0:
-        card['skill0'] = card['skill0'][2:-2]
+        card['skill0'] = card['skill0'].strip('\r\n')
     
     descs = soup.find_all(class_='card-content-description')
     card['desc0'] = descs[0].get_text('\n')
     if len(card['desc0']) > 0:
-        card['desc0'] = card['desc0'][2:-2]
+        card['desc0'] = card['desc0'].strip('\r\n')
     
-    if cid//1000%10 == 1:
+    if card['type'] == 1:
         atks = soup.find_all(class_='el-card-status is-atk')
-        card['atk0'] = int(atks[0].get_text())
-        card['atk1'] = int(atks[1].get_text())
         lifes = soup.find_all(class_='el-card-status is-life')
-        card['life0'] = int(lifes[0].get_text())
-        card['life1'] = int(lifes[1].get_text())
-        card['skill1'] = skills[1].get_text('\n')
+        if len(atks) == 1: # Without un-evolved form
+            card['atk0'] = 0
+            card['atk1'] = int(atks[0].get_text())
+            card['life0'] = 0
+            card['life1'] = int(lifes[0].get_text())
+            card['skill0'] = ''
+            card['skill1'] = skills[0].get_text('\n')
+            card['desc0'] = ''
+            card['desc1'] = descs[0].get_text('\n')
+        else:
+            card['atk0'] = int(atks[0].get_text())
+            card['atk1'] = int(atks[1].get_text())
+            card['life0'] = int(lifes[0].get_text())
+            card['life1'] = int(lifes[1].get_text())
+            card['skill1'] = skills[1].get_text('\n')
+            card['desc1'] = descs[1].get_text('\n')
         if len(card['skill1']) > 0:
-            card['skill1'] = card['skill1'][2:-2]
-        card['desc1'] = descs[1].get_text('\n')
+            card['skill1'] = card['skill1'].strip('\r\n')
         if len(card['desc1']) > 0:
-            card['desc1'] = card['desc1'][2:-2]
+            card['desc1'] = card['desc1'].strip('\r\n')
     
     information = [text for text in soup.find(class_='card-info').stripped_strings]
     if lang == 0 or lang == 3:
@@ -161,8 +178,12 @@ def download_img_and_compress(cid, size=(199,259)):
 
 def get_hash(link):
     if link.find('deckbuilder') >= 0:
+        if link.find('lang=') == -1:
+            link = link + '&lang=zh-tw'
         return re.search('hash=(.*?)&lang=', link).group(1)
     elif link.find('deck/') >= 0:
+        if link.find('lang=') == -1:
+            link = link + '?lang=zh-tw'
         return re.search('deck/(.*?)\?lang=', link).group(1)
     else:
         return 'Not a valid deck link'
@@ -178,9 +199,9 @@ def link_from_hash(hs, lang=3):
     return 'https://shadowverse-portal.com/deck/{}?lang={}'.format(hs, lang_list[lang])
 
 if __name__ == '__main__':
-    link1 = 'https://shadowverse-portal.com/deckbuilder/create/6?hash=3.6.6v3oc.72BIC.72GAY.72Icy.761tS.764Ji.6-Ntw.6v1MC.6v6Ei.6yrV2.gYEAw.6wgKo.72GAi.75_R2.6v8gy.74b5y.78L5A.72GvQ.6v8go.70myy.74Yfi.78MoY.78Moi.6-S1i.767Ug.gYGdA.6-UTo.6yypo.74TnM.78PEo.70kWY.74b5o.74b5o.74b5o.6-N92.6v8h6.74TnC.766lo.6yyq6.74b66&lang=zh-tw'
-    link2 = 'https://shadowverse-portal.com/deck/3.5.745Mi.745Mi.745Mi.77xxo.77xxo.77xxo.72BIC.72BIC.72BIC.761tS.761tS.761tS.745Ms.745Ms.745Ms.77vW0.77vW0.77vW0.7Bm4y.7Bm4y.6yTpQ.6yTpQ.72DkI.72DkI.72DkI.745MY.745MY.745MY.77vVi.77vVi.77vVi.747oy.747oy.747oy.748Xg.748Xg.748Xg.747oo.747oo.747oo?lang=en'
-    print(link_from_hash(get_hash(link1)))
-    print(hash_breakdown(get_hash(link2)))
-    # for i in range(8):
-    #     print(get_card_data(118141010,i))
+    # link1 = 'https://shadowverse-portal.com/deckbuilder/create/6?hash=3.6.6v3oc.72BIC.72GAY.72Icy.761tS.764Ji.6-Ntw.6v1MC.6v6Ei.6yrV2.gYEAw.6wgKo.72GAi.75_R2.6v8gy.74b5y.78L5A.72GvQ.6v8go.70myy.74Yfi.78MoY.78Moi.6-S1i.767Ug.gYGdA.6-UTo.6yypo.74TnM.78PEo.70kWY.74b5o.74b5o.74b5o.6-N92.6v8h6.74TnC.766lo.6yyq6.74b66'
+    # link2 = 'https://shadowverse-portal.com/deck/3.5.745Mi.745Mi.745Mi.77xxo.77xxo.77xxo.72BIC.72BIC.72BIC.761tS.761tS.761tS.745Ms.745Ms.745Ms.77vW0.77vW0.77vW0.7Bm4y.7Bm4y.6yTpQ.6yTpQ.72DkI.72DkI.72DkI.745MY.745MY.745MY.77vVi.77vVi.77vVi.747oy.747oy.747oy.748Xg.748Xg.748Xg.747oo.747oo.747oo?lang=en'
+    # print(link_from_hash(get_hash(link1)))
+    # print(hash_breakdown(get_hash(link2)))
+    for i in range(8):
+        print(get_card_data(100721020,i))
